@@ -1,0 +1,2 @@
+Server half of Hodgepodge. Stops a dedicated server running client-only work for players
+who are not there. Each patch is individually toggleable.

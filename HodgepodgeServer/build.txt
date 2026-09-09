@@ -1,0 +1,5 @@
+displayName = Hodgepodge Server
+author = malteeez
+version = 0.1
+side = Both
+buildIgnore = bin\*, obj\*, *.csproj, *.user

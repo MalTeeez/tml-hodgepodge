@@ -1,0 +1,2 @@
+Client half of Hodgepodge. Fixes defects in other mods and removes render work whose
+result is never drawn. Each patch is individually toggleable.

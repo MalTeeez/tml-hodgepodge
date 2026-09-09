@@ -1,0 +1,38 @@
+Configs: {
+	ClientConfig: {
+		DisplayName: Client patches
+
+		TileEdgeHighlightGuard: {
+			Label: CalamityHunt tile edge highlight
+			Tooltip: Stops the overlay being rebuilt on frames where it is not drawn.
+		}
+
+		ConstellationStarBuffer: {
+			Label: NoxusBoss constellation star buffer
+			Tooltip: Sizes the star buffer to the stars in use instead of to its capacity.
+		}
+
+		ForegroundDoubleUpdate: {
+			Label: Calamity foreground double step
+			Tooltip:
+				'''
+				Steps foreground effects once per tick instead of once per tick and once per frame.
+				Halves the density and fall speed of the rain against how it looks today.
+				'''
+		}
+
+		PlayerPostProcessingRedraw: {
+			Label: NoxusBoss player post processing
+			Tooltip: Redraws a player into a shader target only when a shader asked for one.
+		}
+
+		FullBrightDispatch: {
+			Label: SOTS fullbright dispatch
+			Tooltip:
+				'''
+				Inlines the fullbright test into the lighting engine and drops the detour around it.
+				Unmeasured, and it takes over a SOTS feature rather than removing dead work.
+				'''
+		}
+	}
+}

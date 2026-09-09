@@ -1,0 +1,15 @@
+Configs: {
+	ServerConfig: {
+		DisplayName: Server patches
+
+		MusicFlags: {
+			Label: UnCalamityModMusic state
+			Tooltip: Stops the server deriving music track state for a player that is not there.
+		}
+
+		ForegroundRain: {
+			Label: Calamity foreground rain
+			Tooltip: Stops the server simulating foreground rain particles it never draws.
+		}
+	}
+}
