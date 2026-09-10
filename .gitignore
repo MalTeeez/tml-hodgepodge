@@ -7,4 +7,4 @@ CLAUDE.md
 plan.md
 # profiler output — hundreds of MB per capture
 traces/
-
+__pycache__/

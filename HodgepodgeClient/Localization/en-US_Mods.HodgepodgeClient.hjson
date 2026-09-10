@@ -34,5 +34,153 @@ Configs: {
 				Unmeasured, and it takes over a SOTS feature rather than removing dead work.
 				'''
 		}
+
+		AprilFoolsDateCheck: {
+			Label: April Fools Date Check
+			Tooltip: ""
+		}
+
+		LostColosseumSceneCheck: {
+			Label: UnCalamityModMusic lost colosseum check
+			Tooltip:
+				'''
+				Tests the biome flag before building a throwaway NPC to read a kill count from.
+				Was 98% of every NPC.SetDefaults call in the game.
+				'''
+		}
+
+		ExoMechSkyLookup: {
+			Label: InfernumModeMusic exo mech sky lookup
+			Tooltip: Resolves the Calamity sky property once at load instead of once per tick.
+		}
+
+		LootBeamBatchMode: {
+			Label: LootBeams batch sort mode
+			Tooltip:
+				'''
+				Draws loot beams in a deferred batch instead of flushing to the GPU per sprite,
+				and hands the item pass back in the sort mode vanilla opened it with.
+				'''
+		}
+
+		WallClockDateCache: {
+			Label: Wall clock date reads
+			Tooltip:
+				'''
+				Answers the per tick DateTime.Now reads in Thorium, CalValEX and Ragnarok from a
+				value refreshed once a second. All three together, since patching one alone moves
+				the cost to whichever caller then goes first.
+				'''
+		}
+
+		SubworldActiveScan: {
+			Label: Calamity subworld scan
+			Tooltip:
+				'''
+				Asks SubworldLibrary once whether a subworld is active, instead of once per loaded
+				mod through a string keyed mod call.
+				'''
+		}
+
+		NearbyEffectsBlockDispatch: {
+			Label: Nearby effects block dispatch
+			Tooltip:
+				'''
+				Moves the pylon scanning test that MagicStorage and SerousCommonLib each detour
+				TileLoader.NearbyEffects for into the method itself, dropping both detours.
+				'''
+		}
+
+		TileLightProjectileBonus: {
+			Label: StarsAbove tile light backgrounds
+			Tooltip:
+				'''
+				Replaces three per tile lighting detours with one, reading a value computed once a
+				tick. Unmeasured: the saving is on the lighting worker threads.
+				'''
+		}
+
+		PolarityPulseBatchGuard: {
+			Label: Calamity polarity pulse batch
+			Tooltip:
+				'''
+				Skips the two sprite batch restarts Calamity performs for every NPC drawn when
+				that NPC has no pulse particles to draw, which is nearly always.
+				'''
+		}
+
+		WorkshopTileCenterReuse: {
+			Label: UnCalamityModMusic tile centres
+			Tooltip:
+				'''
+				Empties the recorded tile centre lists in place instead of discarding them each
+				scan, so they stop being regrown from nothing every time.
+				'''
+		}
+
+		DrawTimeLogging: {
+			Label: Vanilla draw time logging
+			Tooltip:
+				'''
+				Stops TimeLogger reading a stopwatch for every draw phase when nothing is recording a
+				frame time log. Its cold entry points already test the same flag.
+				'''
+		}
+
+		TilePreDrawContentIds: {
+			Label: SOTS tile content ids
+			Tooltip:
+				'''
+				Replaces the ModContent tile and wall id lookups in SOTS's per tile PreDraw with the
+				ids themselves, resolved once at load.
+				'''
+		}
+
+		BossIntroScreenGate: {
+			Label: Infernum boss intro screens
+			Tooltip:
+				'''
+				Skips the boss introduction screen update and draw while Infernum's own
+				BossIntroductionAnimationsAreAllowed setting is off.
+				'''
+		}
+
+		MusicEventTrackLookup: {
+			Label: UnCalamityModMusic event track
+			Tooltip:
+				'''
+				Resolves the Calamity music event property once at load instead of searching Calamity's
+				assembly for it by name every tick.
+				'''
+		}
+
+		ShaderDrawerSortDiscarded: {
+			Label: NoxusBoss shader drawer sort
+			Tooltip:
+				'''
+				Drops a sort whose result NoxusBoss never assigns, run once per frame over every shader
+				drawing projectile and NPC.
+				'''
+		}
+
+		EmptyBatchFlush: {
+			Label: Empty sprite batch flush
+			Tooltip:
+				'''
+				Skips the render state application when a sprite batch flushes with nothing queued.
+				Unmeasured, and the only patch here that edits the graphics pipeline rather than a
+				single mod. Turn it off first if anything renders wrongly.
+				'''
+		}
+
+		ForgeRecipeConditionDispatch: {
+			Label: NoxusBoss forge recipe conditions
+			Tooltip:
+				'''
+				Inlines the Starlit Forge adjacency test into the two recipe checks and drops the
+				detours around it. Unmeasured, and it takes over a NoxusBoss feature rather than
+				removing dead work.
+				'''
+		}
 	}
 }

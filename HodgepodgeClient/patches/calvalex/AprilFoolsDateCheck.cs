@@ -1,4 +1,3 @@
-using System;
 using System.Reflection;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -25,8 +24,6 @@ public class AprilFoolsDateCheck : Patch
     private const string TargetType = "CalValEX.AprilFools.CalPaintOverride";
     private const string TargetProperty = "TexturesActive";
 
-    private const byte Ldsfld = 0x7E;
-
     protected override bool Enabled => ModContent.GetInstance<ClientConfig>().AprilFoolsDateCheck;
 
     protected override void Apply()
@@ -48,7 +45,7 @@ public class AprilFoolsDateCheck : Patch
         // The equivalence argument above rests entirely on the getter still consulting netMode.
         // If CalValEX drops that term the property can be true in multiplayer, and an early
         // false would silently disable a working feature instead of skipping dead work.
-        if (!ReadsNetMode(getter))
+        if (!ReadsField(getter, typeof(Main).GetField(nameof(Main.netMode))))
         {
             Mod.Logger.Error($"April fools date check: {TargetProperty} no longer reads " +
                 "Main.netMode, so returning false early would change behaviour, patch disabled");
@@ -67,33 +64,5 @@ public class AprilFoolsDateCheck : Patch
         cursor.Emit(OpCodes.Ldc_I4_0);
         cursor.Emit(OpCodes.Ret);
         cursor.MarkLabel(singlePlayer);
-    }
-
-    // Walks the getter's IL for a static field load of Main.netMode. Scanning for the opcode is
-    // enough here because ldsfld is fixed width: one byte and a four byte metadata token.
-    private static bool ReadsNetMode(MethodInfo getter)
-    {
-        byte[] body = getter.GetMethodBody()?.GetILAsByteArray();
-        if (body == null)
-            return false;
-
-        FieldInfo netMode = typeof(Main).GetField(nameof(Main.netMode));
-        for (int offset = 0; offset + 5 <= body.Length; offset++)
-        {
-            if (body[offset] != Ldsfld)
-                continue;
-
-            try
-            {
-                if (getter.Module.ResolveField(BitConverter.ToInt32(body, offset + 1)) == netMode)
-                    return true;
-            }
-            catch (ArgumentException)
-            {
-                // Not a field token: this byte was operand data, not an opcode. Keep scanning.
-            }
-        }
-
-        return false;
     }
 }
