@@ -36,16 +36,16 @@ public static class LingeringFieldSpawns
         && call.Name == "RequestParticleSpawn"
         && call.DeclaringType.Name == "ParticleOrchestrator";
 
-    // Walks back from the call for the `false` that opens its argument list, which is also where
-    // the whole call begins on the stack. Requiring the particle type to be the constant right
-    // after it is what separates the flag from any other zero: the two are adjacent only because
-    // they are arguments one and two of this call.
-    public static Instruction FindClientOnlyArgument(Instruction call)
+    // Walks back from the call for the requested bool that opens its argument list, which is also
+    // where the whole call begins on the stack. Requiring the particle type to be the constant
+    // right after it separates the flag from any other bool in the method.
+    public static Instruction FindClientOnlyArgument(Instruction call, bool clientOnly)
     {
+        OpCode expected = clientOnly ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0;
         Instruction instruction = call.Previous;
         for (int step = 0; step < ArgumentSearchDepth && instruction != null; step++)
         {
-            if (instruction.OpCode == OpCodes.Ldc_I4_0 && IsInt32Constant(instruction.Next))
+            if (instruction.OpCode == expected && IsInt32Constant(instruction.Next))
                 return instruction;
 
             instruction = instruction.Previous;

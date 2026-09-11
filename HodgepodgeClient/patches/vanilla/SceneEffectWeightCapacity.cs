@@ -21,10 +21,8 @@ namespace HodgepodgeClient;
 // and it is smaller than the arrays the chain allocates on the way to the same length. Nothing
 // about the list's contents or the scene effects chosen from it changes.
 //
-// This is a patch to tModLoader rather than to one mod, which is why it ships off by default: every
-// mod's scene effects run through this method. What makes it a narrow one is that a capacity is not
-// observable -- there is no render state, no ordering and no value here for another mod to inherit
-// -- so the survey a shared-infrastructure patch normally owes has nothing to look for.
+// Every mod's scene effects run through this tModLoader method, but capacity is not observable:
+// there is no render state, ordering or value here for another mod to inherit.
 public class SceneEffectWeightCapacity : Patch
 {
     // Above the count of scene effects active at once in the profiled pack, and small enough that

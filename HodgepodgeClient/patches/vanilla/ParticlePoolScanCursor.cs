@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Mono.Cecil;
@@ -41,17 +45,152 @@ public class ParticlePoolScanCursor : Patch
 
     protected override void Apply()
     {
-        MethodInfo request = typeof(ParticlePool<>).GetMethod(nameof(ParticlePool<IPooledParticle>
-            .RequestParticle), BindingFlags.Instance | BindingFlags.Public);
+        HashSet<Type> poolTypes = FindClosedPoolTypes();
 
-        if (request == null)
+        if (poolTypes.Count == 0)
         {
-            Mod.Logger.Error("Particle pool scan cursor: ParticlePool.RequestParticle is missing, " +
-                "patch disabled");
+            Mod.Logger.Error("Particle pool scan cursor: no closed ParticlePool<T> types were " +
+                "found, patch disabled");
             return;
         }
 
-        MonoModHooks.Modify(request, ResumeScan);
+        int hooked = 0;
+        foreach (Type poolType in poolTypes.OrderBy(type => type.FullName))
+        {
+            MethodInfo request = poolType.GetMethod(nameof(ParticlePool<IPooledParticle>
+                .RequestParticle), BindingFlags.Instance | BindingFlags.Public);
+            if (request == null)
+            {
+                Mod.Logger.Error($"Particle pool scan cursor: {poolType.FullName}." +
+                    "RequestParticle is missing, that particle type was not patched");
+                continue;
+            }
+
+            try
+            {
+                MonoModHooks.Modify(request, ResumeScan);
+                hooked++;
+            }
+            catch (Exception exception)
+            {
+                Mod.Logger.Error($"Particle pool scan cursor: {poolType.FullName} could not be " +
+                    $"patched and was left unchanged, {exception}");
+            }
+        }
+
+        if (hooked == 0)
+            Mod.Logger.Error("Particle pool scan cursor: none of the closed pool types could be " +
+                "patched, patch disabled");
+        else
+            Mod.Logger.Info($"Particle pool scan cursor: patched {hooked} closed pool types");
+    }
+
+    // MonoMod cannot build a trampoline for a method on the open ParticlePool<T> definition.
+    // Persistent pools appear in member signatures, so collect every closed construction from
+    // vanilla and the loaded mods and patch its RequestParticle separately.
+    private static HashSet<Type> FindClosedPoolTypes()
+    {
+        HashSet<Type> poolTypes = new();
+        HashSet<Type> scannedConstructions = new();
+        IEnumerable<Assembly> assemblies = ModLoader.Mods.Select(mod => mod.Code)
+            .Append(typeof(ParticlePool<>).Assembly).Distinct();
+
+        foreach (Assembly assembly in assemblies)
+        foreach (Type type in LoadableTypes(assembly))
+        {
+            try
+            {
+                CollectDeclaredPoolTypes(type, poolTypes);
+                CollectConstructedHierarchy(type.BaseType, poolTypes, scannedConstructions);
+                foreach (Type implemented in type.GetInterfaces())
+                    CollectConstructedHierarchy(implemented, poolTypes, scannedConstructions);
+            }
+            catch (FileNotFoundException)
+            {
+                // An unrelated type can name an optional mod assembly that is not enabled. Its
+                // signatures cannot contain a usable pool, but must not stop the rest of the scan.
+            }
+            catch (TypeLoadException)
+            {
+                // As above, for an unresolved type rather than its containing assembly.
+            }
+        }
+
+        return poolTypes;
+    }
+
+    private static void CollectDeclaredPoolTypes(Type type, HashSet<Type> poolTypes)
+    {
+        const BindingFlags declared = BindingFlags.Instance | BindingFlags.Static
+            | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+
+        foreach (FieldInfo field in type.GetFields(declared))
+            CollectPoolType(field.FieldType, poolTypes);
+        foreach (PropertyInfo property in type.GetProperties(declared))
+            CollectPoolType(property.PropertyType, poolTypes);
+        foreach (MethodInfo method in type.GetMethods(declared))
+            CollectMethodTypes(method, poolTypes);
+    }
+
+    // A generic owner can declare ParticlePool<T> while a non-generic subclass closes T. Reflection
+    // substitutes that argument when its inherited constructed type is inspected, which finds the
+    // CalamityHunt Particle<T> pools that a scan of the open declaration alone cannot hook.
+    private static void CollectConstructedHierarchy(Type type, HashSet<Type> poolTypes,
+        HashSet<Type> scannedConstructions)
+    {
+        if (type?.IsConstructedGenericType != true || !scannedConstructions.Add(type))
+            return;
+
+        CollectPoolType(type, poolTypes);
+        CollectDeclaredPoolTypes(type, poolTypes);
+        CollectConstructedHierarchy(type.BaseType, poolTypes, scannedConstructions);
+        foreach (Type implemented in type.GetInterfaces())
+            CollectConstructedHierarchy(implemented, poolTypes, scannedConstructions);
+    }
+
+    private static Type[] LoadableTypes(Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException exception)
+        {
+            return exception.Types.Where(type => type != null).ToArray();
+        }
+    }
+
+    // Include parameters and returns so a pool exposed by a factory rather than held in a field
+    // still contributes its closed type. A method-local pool cannot retain a long scan prefix
+    // between calls unless it escapes through one of these signatures.
+    private static void CollectMethodTypes(MethodBase method, HashSet<Type> poolTypes)
+    {
+        if (method is MethodInfo methodInfo)
+            CollectPoolType(methodInfo.ReturnType, poolTypes);
+        foreach (ParameterInfo parameter in method.GetParameters())
+            CollectPoolType(parameter.ParameterType, poolTypes);
+    }
+
+    private static void CollectPoolType(Type signature, HashSet<Type> poolTypes)
+    {
+        if (signature.HasElementType)
+        {
+            CollectPoolType(signature.GetElementType(), poolTypes);
+            return;
+        }
+
+        if (!signature.IsGenericType)
+            return;
+
+        if (signature.GetGenericTypeDefinition() == typeof(ParticlePool<>))
+        {
+            if (!signature.ContainsGenericParameters)
+                poolTypes.Add(signature);
+            return;
+        }
+
+        foreach (Type argument in signature.GetGenericArguments())
+            CollectPoolType(argument, poolTypes);
     }
 
     // Prepends a fast path and leaves the original body behind it as the fallback:

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -42,9 +43,10 @@ public class SubworldActiveScan : Patch
         MethodInfo inAnySubworld = calamity.Code.GetType(TargetType)?.GetMethod(TargetMethod,
             BindingFlags.Static | BindingFlags.NonPublic, binder: null, Type.EmptyTypes,
             modifiers: null);
-        MethodInfo anyActive = subworldLibrary.Code.GetType(SubworldSystemTypeName)?.GetMethod(
-            "AnyActive", BindingFlags.Static | BindingFlags.Public, binder: null, Type.EmptyTypes,
-            modifiers: null);
+        MethodInfo anyActive = subworldLibrary.Code.GetType(SubworldSystemTypeName)?.GetMethods(
+            BindingFlags.Static | BindingFlags.Public).SingleOrDefault(method =>
+                method.Name == "AnyActive" && !method.IsGenericMethod
+                && method.GetParameters().Length == 0);
 
         if (inAnySubworld?.ReturnType != typeof(bool) || anyActive?.ReturnType != typeof(bool))
         {

@@ -49,7 +49,7 @@ public class ModTypeNameCache : Patch
 
     protected override bool Enabled => ModContent.GetInstance<ClientConfig>().ModTypeNameCache;
 
-    public static string Name(Func<ModType, string> orig, ModType self)
+    public static string CachedName(Func<ModType, string> orig, ModType self)
     {
         // Asking the mod rather than the cache is the whole exemption: a name provider may answer
         // differently for the same type from one call to the next.
@@ -84,7 +84,7 @@ public class ModTypeNameCache : Patch
         Names.Clear();
 
         int before = DetourCount(getter);
-        MonoModHooks.Add(getter, Name);
+        MonoModHooks.Add(getter, CachedName);
 
         // Daybreak hooks the same getter from a module initializer, so this one has to land on top
         // of it to be the one that answers. A count that did not move means it did not attach and

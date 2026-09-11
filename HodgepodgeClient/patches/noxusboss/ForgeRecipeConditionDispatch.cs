@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using System.Reflection;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using Terraria;
@@ -26,25 +28,6 @@ public class ForgeRecipeConditionDispatch : Patch
 {
     private const string TargetMod = "NoxusBoss";
     private const string ForgeTileName = "StarlitForgeTile";
-
-    // Both detours byte for byte, with the three metadata tokens left open. Replicating a method
-    // means owning it, so the whole body is pinned rather than its length: a same-length rewrite
-    // -- a different tile, an extra condition, a changed return -- has to fail this check, or the
-    // patch drops NoxusBoss's real hooks and substitutes behaviour that no longer matches.
-    private static readonly byte?[] ExpectedDetourBody =
-    [
-        0x04,                           // ldarg.2  (player)
-        0x6F, null, null, null, null,   // callvirt Player.get_adjTile
-        0x02,                           // ldarg.0  (this)
-        0x28, null, null, null, null,   // call ModBlockType.get_Type
-        0x91,                           // ldelem.u1
-        0x2B, 0x02,                     // brfalse.s over the early return
-        0x17,                           // ldc.i4.1
-        0x2A,                           // ret
-        0x03, 0x04, 0x05,               // ldarg.1 .. ldarg.3
-        0x6F, null, null, null, null,   // callvirt orig.Invoke
-        0x2A                            // ret
-    ];
 
     private static ushort _forgeType;
     private static int _injected;
@@ -125,24 +108,42 @@ public class ForgeRecipeConditionDispatch : Patch
 
     private static bool StandingByForge(Player player) => player.adjTile[_forgeType];
 
-    // Opcodes have to match exactly and the three operands have to name the members being
-    // replicated; a token pointing anywhere else means this is a different method that happens to
-    // be the same shape.
+    // Pin the complete meaning of the detour rather than its serialized bytes. The previous byte
+    // guard encoded brfalse.s as br.s and therefore rejected the unchanged NoxusBoss 1.2 body;
+    // semantic matching also avoids making metadata tokens and branch width part of the contract.
     private static bool IsPlainAdjacencyCheck(MethodInfo detour)
     {
-        byte[] body = detour.GetMethodBody()?.GetILAsByteArray();
-        if (body == null || body.Length != ExpectedDetourBody.Length)
+        Instruction[] body = InstructionsOf(detour)
+            .Where(instruction => instruction.OpCode != OpCodes.Nop).ToArray();
+        if (body.Length != 13)
             return false;
 
-        for (int offset = 0; offset < body.Length; offset++)
-        {
-            if (ExpectedDetourBody[offset] is byte expected && body[offset] != expected)
-                return false;
-        }
+        return body[0].MatchLdarg(2)
+            && IsCall(body[1], "get_adjTile", typeof(Player).FullName)
+            && body[2].MatchLdarg(0)
+            && IsCall(body[3], "get_Type", typeof(ModBlockType).FullName)
+            && body[4].OpCode == OpCodes.Ldelem_U1
+            && (body[5].OpCode == OpCodes.Brfalse || body[5].OpCode == OpCodes.Brfalse_S)
+            && SkipNops(body[5].Operand as Instruction) == body[8]
+            && body[6].MatchLdcI4(1)
+            && body[7].OpCode == OpCodes.Ret
+            && body[8].MatchLdarg(1)
+            && body[9].MatchLdarg(2)
+            && body[10].MatchLdarg(3)
+            && IsCall(body[11], "Invoke", declaringType: null)
+            && body[12].OpCode == OpCodes.Ret;
+    }
 
-        Module module = detour.Module;
-        return module.ResolveMethod(BitConverter.ToInt32(body, 2)) is { Name: "get_adjTile" }
-            && module.ResolveMethod(BitConverter.ToInt32(body, 8)) is { Name: "get_Type" }
-            && module.ResolveMethod(BitConverter.ToInt32(body, 21)) is { Name: "Invoke" };
+    private static bool IsCall(Instruction instruction, string name, string declaringType) =>
+        (instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt)
+        && instruction.Operand is MethodReference called && called.Name == name
+        && (declaringType == null || called.DeclaringType.FullName == declaringType);
+
+    private static Instruction SkipNops(Instruction instruction)
+    {
+        while (instruction?.OpCode == OpCodes.Nop)
+            instruction = instruction.Next;
+
+        return instruction;
     }
 }

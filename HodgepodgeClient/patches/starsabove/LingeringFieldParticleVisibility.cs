@@ -71,7 +71,10 @@ public class LingeringFieldParticleVisibility : Patch
             if (!LingeringFieldSpawns.IsParticleSpawn(instruction))
                 continue;
 
-            Instruction flag = LingeringFieldSpawns.FindClientOnlyArgument(instruction);
+            // HookEndpointManager reapplies the broadcast manipulator before this one, so the
+            // argument must now be true. Matching that state also proves the required patch ran.
+            Instruction flag = LingeringFieldSpawns.FindClientOnlyArgument(instruction,
+                clientOnly: true);
             if (flag == null)
             {
                 Mod.Logger.Error($"Lingering field particle visibility: {type}.AI no longer " +

@@ -24,8 +24,8 @@ namespace HodgepodgeClient;
 // The answer does not vary per tile, only per tick, so the counts are read once in
 // PostUpdateEverything and every tile reads one float. Three trampolines become one.
 //
-// The gain is bounded by the main thread's wait on the lighting pass, not by the worker share, and
-// the traces cannot say how those relate. That is why this ships off until it has been measured.
+// The gain is bounded by the main thread's wait on the lighting pass rather than by the worker
+// share itself.
 public class TileLightProjectileBonus : Patch
 {
     private const string TargetMod = "StarsAbove";

@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using MonoMod.RuntimeDetour;
+using MonoMod.Utils;
 using Terraria.ModLoader;
 
 namespace HodgepodgeClient;
@@ -110,7 +113,7 @@ public abstract class Patch : ModSystem
     }
 
     // Bytes of operand following the opcode. A switch carries a jump count and then that many
-    // four byte targets; everything else is fixed by its operand type.
+    // four byte targets, everything else is fixed by its operand type.
     private static int OperandLength(OpCode opCode, byte[] body, int offset) => opCode.OperandType
         switch
         {
@@ -144,6 +147,14 @@ public abstract class Patch : ModSystem
         Mod.Logger.Error($"{GetType().Name}: {detour.Name} did not detach from {patched.Name}, " +
             "so its work now happens twice rather than once");
         return false;
+    }
+
+    // A method's body as Cecil instructions, for pinning the shape of a method a patch depends on
+    // without modifying it. ReadsField mainly provides which methods a lambda calls, how many times a call appears.
+    protected static IEnumerable<Mono.Cecil.Cil.Instruction> InstructionsOf(MethodBase method)
+    {
+        using DynamicMethodDefinition definition = new DynamicMethodDefinition(method);
+        return definition.Definition.Body.Instructions.ToArray();
     }
 
     protected static int DetourCount(MethodBase method)

@@ -51,7 +51,8 @@ public class LingeringFieldParticleBroadcast : Patch
             if (!LingeringFieldSpawns.IsParticleSpawn(instruction))
                 continue;
 
-            Instruction flag = LingeringFieldSpawns.FindClientOnlyArgument(instruction);
+            Instruction flag = LingeringFieldSpawns.FindClientOnlyArgument(instruction,
+                clientOnly: false);
             if (flag == null)
             {
                 Mod.Logger.Error($"Lingering field particle broadcast: {type}.AI no longer " +

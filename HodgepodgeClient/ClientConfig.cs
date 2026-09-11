@@ -135,44 +135,97 @@ public class ClientConfig : ModConfig
     [ReloadRequired]
     public bool VoidAnomalyRangeGuard { get; set; }
 
-    // Off until a before/after exists: it narrows a sweep to the visible screen, so unlike the
-    // others here it is the only one whose result could differ from the mod's at an odd zoom or
-    // resolution rather than only costing less.
-    [DefaultValue(false)]
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool CurseFoamDrawGate { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool NebulaFoamDrawGate { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool PlasmaGenBossScan { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool BossPromptPresenceScan { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool NuclearTorrentInvisibleDraw { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool SeaPrismPresenceScan { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool EmptyPixelationTargetDraw { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool MusicFlagsLocalPlayer { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool CritterBestiaryRegistration { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool XykWingCountScan { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool PlayerDrawTextureCache { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool AuricSoulSceneItemIds { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool StellarNovaTextGate { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool CosmosMetaballIdleDraw { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool HeldItemSnapshotClone { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool MouseItemSlotClone { get; set; }
+
+    [DefaultValue(true)]
     [ReloadRequired]
     public bool LumenylCrystalScan { get; set; }
 
-    // Off until a before/after exists: it detours a tModLoader property every mod's content reads,
-    // which is the bar this project sets for a patch to shared infrastructure.
+    // Opt-in because this detours a tModLoader property read by every mod's content.
     [DefaultValue(false)]
     [ReloadRequired]
     public bool ModTypeNameCache { get; set; }
 
-    // Off until a before/after exists: this is the only patch here that rewrites tModLoader rather
-    // than a mod, so it stays off until the reclaimed time has been measured on both sides.
-    [DefaultValue(false)]
+    [DefaultValue(true)]
     [ReloadRequired]
     public bool SceneEffectWeightCapacity { get; set; }
 
-    // Off until a before/after exists: the saving is on the lighting worker threads, and how much
-    // of that reaches the main thread's wait on them is not something the traces can say.
-    [DefaultValue(false)]
+    [DefaultValue(true)]
     [ReloadRequired]
     public bool TileLightProjectileBonus { get; set; }
 
-    // Off until a before/after exists: this one takes over a NoxusBoss feature rather than
-    // removing work, the same reason FullBrightDispatch ships off.
+    // Opt-in because this replaces a NoxusBoss feature rather than removing dead work.
     [DefaultValue(false)]
     [ReloadRequired]
     public bool ForgeRecipeConditionDispatch { get; set; }
 
-    // Off until a before/after exists: this one replaces a SOTS feature rather than removing work.
-    [DefaultValue(false)]
+    [DefaultValue(true)]
     [ReloadRequired]
     public bool FullBrightDispatch { get; set; }
 
-    // Off until a before/after exists: it rewrites a vanilla type every mod's particles pass
-    // through, and it changes the order particles are reused and drawn in within a pool.
+    // Opt-in because this changes particle reuse and draw order in a shared vanilla pool type.
     [DefaultValue(false)]
     [ReloadRequired]
     public bool ParticlePoolScanCursor { get; set; }

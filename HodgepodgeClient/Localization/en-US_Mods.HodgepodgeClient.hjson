@@ -31,13 +31,12 @@ Configs: {
 			Tooltip:
 				'''
 				Inlines the fullbright test into the lighting engine and drops the detour around it.
-				Unmeasured, and it takes over a SOTS feature rather than removing dead work.
 				'''
 		}
 
 		AprilFoolsDateCheck: {
 			Label: April Fools Date Check
-			Tooltip: ""
+			Tooltip: Skips the April Fools date work outside single player, where it cannot apply.
 		}
 
 		LostColosseumSceneCheck: {
@@ -96,7 +95,7 @@ Configs: {
 			Tooltip:
 				'''
 				Replaces three per tile lighting detours with one, reading a value computed once a
-				tick. Unmeasured: the saving is on the lighting worker threads.
+				tick.
 				'''
 		}
 
@@ -257,7 +256,7 @@ Configs: {
 			Tooltip:
 				'''
 				Gives tModLoader's per tick scene effect list a capacity so it stops regrowing from
-				empty. Unmeasured, and the only patch here that rewrites tModLoader itself.
+				empty.
 				'''
 		}
 
@@ -290,10 +289,7 @@ Configs: {
 
 		TimeFrozenIdLookup: {
 			Label: InfernalEclipseAPI time freeze checks
-			Tooltip:
-				'''
-				Folds the NPC ids this per NPC per tick check rebuilds by name into constants.
-				'''
+			Tooltip: Folds the NPC ids this per NPC per tick check rebuilds by name into constants.
 		}
 
 		ResetEffectsContentIds: {
@@ -319,8 +315,146 @@ Configs: {
 			Tooltip:
 				'''
 				Narrows Infernum's 32,000 tile per frame search for Abyss crystals to the tiles on
-				screen, which are the only ones whose result is ever visible. Unmeasured, and the
-				only patch here whose result depends on resolution and zoom.
+				screen, which are the only ones whose result is ever visible.
+				'''
+		}
+
+		CurseFoamDrawGate: {
+			Label: SOTS curse foam draw
+			Tooltip:
+				'''
+				Skips the foam texture lookup when there is no foam to draw, answers it from a table
+				when there is, and folds the projectile ids the per player scan resolves per slot.
+				'''
+		}
+
+		NebulaFoamDrawGate: {
+			Label: Catalyst nebula foam draw
+			Tooltip: The same fix as the SOTS one above, for Catalyst's copy of the same helper.
+		}
+
+		PlasmaGenBossScan: {
+			Label: InfernalEclipseAPI plasma generator blocker
+			Tooltip:
+				'''
+				Asks once per tick whether a blocking boss is alive, instead of seventeen world
+				scans per accessory per player per tick.
+				'''
+		}
+
+		BossPromptPresenceScan: {
+			Label: StarsAbove boss prompts
+			Tooltip:
+				'''
+				Runs the ninety-odd boss prompt checks only on ticks where one of those bosses is
+				alive, found by one scan per tick instead of one per boss per player.
+				'''
+		}
+
+		NuclearTorrentInvisibleDraw: {
+			Label: Calamity nuclear torrent invisible draw
+			Tooltip:
+				'''
+				Skips drawing and simulating the torrent and its rain while it is faded out and not
+				showing, where every sprite is transparent, and answers the raindrop texture lookup
+				from a table. The rain fills in over about a second on the first torrent of a world.
+				'''
+		}
+
+		SeaPrismPresenceScan: {
+			Label: Calamity sea prism shader passes
+			Tooltip:
+				'''
+				Skips the sea prism tile and wall shader passes, and the batch restarts they need,
+				on frames where no sea prism is on screen.
+				'''
+		}
+
+		EmptyPixelationTargetDraw: {
+			Label: Calamity and Luminance pixelation targets
+			Tooltip:
+				'''
+				Skips the thirteen per frame fullscreen draws of pixelation targets that nothing
+				drew into this frame. Each was a batch restart to draw a transparent texture.
+				'''
+		}
+
+		MusicFlagsLocalPlayer: {
+			Label: UnCalamityModMusic flags per player
+			Tooltip:
+				'''
+				Derives the music flags once per tick from the local player instead of once per
+				player in the world, all from the local player. No change in single player.
+				'''
+		}
+
+		CritterBestiaryRegistration: {
+			Label: CalValEX critter bestiary
+			Tooltip:
+				'''
+				Registers a nearby critter from its content sample instead of a throwaway NPC, and
+				only while its bestiary entry is not yet fully unlocked.
+				'''
+		}
+
+		XykWingCountScan: {
+			Label: Calamity Xyk wing count
+			Tooltip:
+				'''
+				Counts a player's wings once per wing update and once per owner per draw instead of
+				once per question, and answers the wing textures from a table.
+				'''
+		}
+
+		PlayerDrawTextureCache: {
+			Label: Calamity player draw textures
+			Tooltip:
+				'''
+				Answers the tail and backpack texture lookups from a table instead of asking the
+				asset repository by name once per player per frame.
+				'''
+		}
+
+		AuricSoulSceneItemIds: {
+			Label: CalamityHunt auric soul scenes
+			Tooltip: Folds the item id each soul scene resolves per item slot per tick into a constant.
+		}
+
+		StellarNovaTextGate: {
+			Label: StarsAbove Stellar Nova panel text
+			Tooltip:
+				'''
+				Builds the Stellar Nova panel's seven strings only while the panel is open or fading
+				out. The nova numbers and set bonuses beside them still run every tick.
+				'''
+		}
+
+		CosmosMetaballIdleDraw: {
+			Label: CalamityHunt black hole shade
+			Tooltip:
+				'''
+				Skips the per frame render target and fullscreen shader pass for Goozma's black hole
+				while no black hole projectile or particle exists to draw into it.
+				'''
+		}
+
+		HeldItemSnapshotClone: {
+			Label: Vanilla held item clone
+			Tooltip:
+				'''
+				Keeps the held item clone that draw code reads while the item's type, stack and
+				prefix are unchanged, which is vanilla's own test during item use, instead of
+				cloning it and every mod's item data once per player per tick.
+				'''
+		}
+
+		MouseItemSlotClone: {
+			Label: Vanilla mouse item slot clone
+			Tooltip:
+				'''
+				Keeps the clone in temporary held-item slot 58 while the mouse item's type, stack
+				and prefix are unchanged, instead of cloning it and every mod's item data once per
+				tick while the inventory is open.
 				'''
 		}
 

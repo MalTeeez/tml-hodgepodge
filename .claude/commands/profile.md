@@ -188,13 +188,24 @@ matters on the main thread is its wait in `FastParallel.For`, not what the worke
 For every candidate worth proposing, **decompile the owning mod and read the method.**
 
 ```
-python tools/untmod.py <path-to>.tmod <outdir>            # extract the .tmod
-ilspycmd -p -o src/ -r "<tml-install-dir>" -r <mods-dir> <outdir>/TheMod.dll
+python tools/dump_il.py --csharp TheMod Namespace.Type            # the method as C#
+python tools/dump_il.py TheMod Namespace.Type::Method              # the IL a manipulator matches
+python tools/dump_il.py TheMod Namespace.Outer/Nested::Method      # nested types, closures
 ```
+
+`dump_il.py` finds the newest installed `.tmod`, extracts it and dumps its assembly once per
+version into a temp cache, then slices out what was asked for. The first IL call for a large
+mod is slow — Calamity is 180 MB of IL and about three minutes — because ilspycmd's `-t`
+filter does not apply to `-il`; do not try to shortcut that by passing `-t` yourself. For a
+whole mod as C# the underlying commands are `tools/untmod.py <tmod> <outdir>` and
+`ilspycmd -p -o src/ -r "<tml-install-dir>" -r <mods-dir> <outdir>/TheMod.dll`.
 
 A profile says *where*. Only the source says *whether the work should happen at all*. Do
 not propose a patch for a method you have not read — that has generated two false
-findings in this project.
+findings in this project. And read the IL, not only the C#, before writing a manipulator
+that matches instruction shapes: the decompiler hides `ldloca` for out-arguments, folds
+`ldc.i4` forms, and shows a lambda as inline code when it is a method on a nested `<>c`
+class.
 
 **Check the installed mods' own config before proposing anything.** Read the JSON in
 `Documents/My Games/Terraria/tModLoader/ModConfigs/` and the defaults in the mod's config
