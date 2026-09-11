@@ -1,0 +1,49 @@
+name: Build
+
+on: push
+
+permissions:
+  contents: read
+
+env:
+  # tModLoader is pinned so a build is reproducible; bump it deliberately.
+  TML_VERSION: v2026.07.3.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # for the release step, which only runs on a tag push
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      # The release zip is 60 MB and the same for every run at a given version.
+      - id: cache-tml
+        uses: actions/cache@v6
+        with:
+          path: tml
+          key: tml-${{ env.TML_VERSION }}
+
+      - if: steps.cache-tml.outputs.cache-hit != 'true'
+        run: |
+          curl -sSfL -o tml.zip \
+            https://github.com/tModLoader/tModLoader/releases/download/$TML_VERSION/tModLoader.zip
+          unzip -q tml.zip -d tml
+
+      - env:
+          TmlInstallDir: ${{ github.workspace }}/tml
+        run: ./build.sh
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tmod
+          path: out/*.tmod
+
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          files: out/*.tmod

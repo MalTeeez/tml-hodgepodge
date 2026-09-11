@@ -1,3 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="C:\Program Files (x86)\Steam\steamapps\common\tModLoader\tMLMod.targets" />
+  <PropertyGroup>
+    <!-- The Steam install locally; CI points this at the tModLoader release it unpacked. -->
+    <TmlInstallDir Condition="'$(TmlInstallDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\tModLoader</TmlInstallDir>
+  </PropertyGroup>
+  <Import Project="$(TmlInstallDir)/tMLMod.targets" />
 </Project>

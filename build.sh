@@ -28,6 +28,11 @@ for mod in HodgepodgeClient HodgepodgeServer; do
     mv "$scratch/Mods/$mod.tmod" "out/$mod.tmod"
     echo "  -> out/$mod.tmod"
 
+    # A build machine has no Mods folder worth filling, so out/ is the whole job there.
+    if [ -n "$CI" ]; then
+        continue
+    fi
+
     # tModLoader refuses to overwrite a .tmod the running game has loaded. out/ is already
     # written by then, so that is worth a warning rather than losing the build.
     if installed=$(dotnet build "$mod/$mod.csproj" -c "$configuration" --nologo 2>&1); then
