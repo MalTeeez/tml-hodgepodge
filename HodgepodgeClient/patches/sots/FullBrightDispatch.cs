@@ -72,6 +72,9 @@ public class FullBrightDispatch : Patch
             return;
         }
 
+        // Static, so without this the flag answers for the previous load, and SOTS's hook comes
+        // off on the strength of an injection that did not happen this time.
+        _injected = false;
         MonoModHooks.Modify(
             typeof(LightingEngine).GetMethod(nameof(LightingEngine.GetColor),
                 new[] { typeof(int), typeof(int) }),

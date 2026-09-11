@@ -163,13 +163,164 @@ Configs: {
 				'''
 		}
 
-		EmptyBatchFlush: {
-			Label: Empty sprite batch flush
+		CurseDustPixelCache: {
+			Label: SOTS curse dust pixels
 			Tooltip:
 				'''
-				Skips the render state application when a sprite batch flushes with nothing queued.
-				Unmeasured, and the only patch here that edits the graphics pipeline rather than a
-				single mod. Turn it off first if anything renders wrongly.
+				Reads the Pharaoh's Curse dust textures back off the GPU once instead of five times a
+				tick. Only costs anything while that boss is alive.
+				'''
+		}
+
+		DebuffProjectileScan: {
+			Label: SOTS debuff projectile scan
+			Tooltip: Skips dead projectile slots in the per NPC per tick scan, which none of its tests could match anyway.
+		}
+
+		CurseIconDrawGate: {
+			Label: SOTS curse icon draw
+			Tooltip:
+				'''
+				Skips the nine curse icon texture lookups on an NPC carrying no SOTS curse, which is
+				every NPC the icons were never going to be drawn on.
+				'''
+		}
+
+		LootBeamTextureCache: {
+			Label: LootBeams texture lookup
+			Tooltip:
+				'''
+				Answers the beam and glow texture lookups from a table instead of asking the asset
+				repository for them by name on every item on every frame.
+				'''
+		}
+
+		WhipBuffImmunityScan: {
+			Label: Whip addon buff immunity
+			Tooltip:
+				'''
+				Clears immunity for the whip addon's own buffs from a list built once, instead of
+				walking every buff type in the game once per NPC per tick.
+				'''
+		}
+
+		BlueMoonBuffLookup: {
+			Label: InfernalEclipseAPI blue moon buffs
+			Tooltip:
+				'''
+				Resolves the BlueMoon buff handles once at load instead of rebuilding them by name
+				once per player per tick.
+				'''
+		}
+
+		AstrageldonPresenceScan: {
+			Label: CalamityHunt Astrageldon check
+			Tooltip:
+				'''
+				Tests the NPC type before scanning the world for Goozma, and drops a second scan
+				whose result CalamityHunt never reads.
+				'''
+		}
+
+		LingeringFieldParticleBroadcast: {
+			Label: StarsAbove lingering field particles
+			Tooltip:
+				'''
+				Spawns the particles from three StarsAbove damage fields locally instead of sending
+				each one through the server and back. Every client already raises its own, so this
+				removes the duplicates and the traffic rather than the effect.
+				'''
+		}
+
+		LingeringFieldParticleVisibility: {
+			Label: StarsAbove lingering field particles off screen
+			Tooltip:
+				'''
+				Skips those particles for fields outside the view, where they are never drawn but
+				still hold a pool slot. Needs the setting above on, or it would decide what other
+				players see as well.
+				'''
+		}
+
+		ParticlePoolScanCursor: {
+			Label: Particle pool search
+			Tooltip:
+				'''
+				Resumes vanilla's search for a free particle where the last one succeeded instead of
+				restarting at the front of the pool. Particles are reused and drawn in a different
+				order within a pool. Unmeasured, and it rewrites a type every mod's particles use.
+				'''
+		}
+
+		SceneEffectWeightCapacity: {
+			Label: Scene effect weight list
+			Tooltip:
+				'''
+				Gives tModLoader's per tick scene effect list a capacity so it stops regrowing from
+				empty. Unmeasured, and the only patch here that rewrites tModLoader itself.
+				'''
+		}
+
+		InfernalItemBalanceCache: {
+			Label: InfernalEclipseAPI item balance lookups
+			Tooltip:
+				'''
+				Answers the item balance helper from a table built once instead of rebuilding four
+				dictionary lookups for every one of the hundreds of items it tests per item synced.
+				'''
+		}
+
+		ModTypeNameCache: {
+			Label: Daybreak mod type names
+			Tooltip:
+				'''
+				Remembers the name Daybreak derives for each content type instead of asking
+				reflection for it again every time a mod reads one.
+				'''
+		}
+
+		InfernalBossBuffScan: {
+			Label: InfernalEclipseAPI boss buff scan
+			Tooltip:
+				'''
+				Asks whether an NPC is a boss before walking all 255 player slots for it, rather
+				than after. Only a boss could ever have used the result.
+				'''
+		}
+
+		TimeFrozenIdLookup: {
+			Label: InfernalEclipseAPI time freeze checks
+			Tooltip:
+				'''
+				Folds the NPC ids this per NPC per tick check rebuilds by name into constants.
+				'''
+		}
+
+		ResetEffectsContentIds: {
+			Label: Calamity NPC reset effects ids
+			Tooltip:
+				'''
+				Folds the content id lookups Calamity resolves for every NPC every tick into
+				constants.
+				'''
+		}
+
+		VoidAnomalyRangeGuard: {
+			Label: SOTS Void Anomaly collision range
+			Tooltip:
+				'''
+				Skips the Void Anomaly's per entity work for anything too far away to be pulled or
+				pushed, before the distance maths rather than after it.
+				'''
+		}
+
+		LumenylCrystalScan: {
+			Label: Infernum Lumenyl crystal sweep
+			Tooltip:
+				'''
+				Narrows Infernum's 32,000 tile per frame search for Abyss crystals to the tiles on
+				screen, which are the only ones whose result is ever visible. Unmeasured, and the
+				only patch here whose result depends on resolution and zoom.
 				'''
 		}
 

@@ -1,14 +1,19 @@
 using System;
 using System.Reflection;
 using System.Reflection.Emit;
-using MonoMod.RuntimeDetour;
+using Terraria;
 using Terraria.ModLoader;
 
-namespace HodgepodgeClient;
+namespace HodgepodgeServer;
 
 // Every patch resolves another mod's members by name and rewrites its IL, so every patch can fail
 // on a dependency update. Failing has to cost this patch alone: an escaping exception here takes
-// the game down during mod loading, which is worse than any patch is worth.
+// the server down during mod loading, which is worse than any patch is worth.
+//
+// This mod is side = Both, so it also loads on every client that joins. Nothing here is meant to
+// run there -- the client patches live in their own mod, and applying both to one process would
+// have the second rewrite look for IL the first already replaced -- so the dedicated server test
+// belongs in one place rather than in each patch.
 public abstract class Patch : ModSystem
 {
     private const byte TwoByteOpCodePrefix = 0xFE;
@@ -38,7 +43,7 @@ public abstract class Patch : ModSystem
 
     public override void PostSetupContent()
     {
-        if (!Enabled)
+        if (!Main.dedServ || !Enabled)
             return;
 
         try
@@ -91,9 +96,9 @@ public abstract class Patch : ModSystem
         return false;
     }
 
-    // Address loads count as reads. A field passed by reference -- `ref PlatinumCurse` -- is
-    // consulted by whatever receives it just as a value load is, and pinning on the value load
-    // alone would miss every field a method hands out that way.
+    // Address loads count as reads. A field passed by reference is consulted by whatever receives
+    // it just as a value load is, and pinning on the value load alone would miss every field a
+    // method hands out that way.
     private static bool IsFieldLoad(OpCode opCode) => opCode == OpCodes.Ldsfld
         || opCode == OpCodes.Ldfld || opCode == OpCodes.Ldsflda || opCode == OpCodes.Ldflda;
 
@@ -127,31 +132,4 @@ public abstract class Patch : ModSystem
                 ? -1 : 4 + 4 * BitConverter.ToInt32(body, offset),
             _ => -1,
         };
-
-    // Removes a hook another mod registered through an On_ event, by rebuilding the delegate it
-    // registered: delegates compare by target and method, and HookEndpointManager keys its table
-    // on (method, delegate). It drops a miss silently, so the detour count is the only way to know
-    // the removal landed -- and a patch that replaced a hook without removing it is not faster.
-    protected bool Detach<THook>(MethodBase patched, object target, MethodInfo detour,
-        Action<THook> remove) where THook : Delegate
-    {
-        int before = DetourCount(patched);
-        remove((THook)Delegate.CreateDelegate(typeof(THook), target, detour));
-
-        if (DetourCount(patched) < before)
-            return true;
-
-        Mod.Logger.Error($"{GetType().Name}: {detour.Name} did not detach from {patched.Name}, " +
-            "so its work now happens twice rather than once");
-        return false;
-    }
-
-    protected static int DetourCount(MethodBase method)
-    {
-        int count = 0;
-        foreach (DetourInfo _ in DetourManager.GetDetourInfo(method).Detours)
-            count++;
-
-        return count;
-    }
 }

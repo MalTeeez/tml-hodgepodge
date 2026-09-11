@@ -44,6 +44,10 @@ public class ConstellationStarBuffer : Patch
             return;
         }
 
+        // Static, so without this the flag answers for the previous load, and the upload shrinks
+        // on the strength of a draw call that was not narrowed this time -- which draws past the
+        // vertices that were uploaded.
+        _drawCallNarrowed = false;
         MonoModHooks.Modify(renderStars, NarrowDrawCall);
         if (_drawCallNarrowed)
             MonoModHooks.Modify(updateVertexBuffer, ShrinkStarArray);

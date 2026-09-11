@@ -77,7 +77,82 @@ public class ClientConfig : ModConfig
 
     [DefaultValue(true)]
     [ReloadRequired]
+    public bool DebuffProjectileScan { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
     public bool ShaderDrawerSortDiscarded { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool CurseDustPixelCache { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool CurseIconDrawGate { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool LootBeamTextureCache { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool WhipBuffImmunityScan { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool BlueMoonBuffLookup { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool AstrageldonPresenceScan { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool LingeringFieldParticleBroadcast { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool LingeringFieldParticleVisibility { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool InfernalItemBalanceCache { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool InfernalBossBuffScan { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool TimeFrozenIdLookup { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool ResetEffectsContentIds { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool VoidAnomalyRangeGuard { get; set; }
+
+    // Off until a before/after exists: it narrows a sweep to the visible screen, so unlike the
+    // others here it is the only one whose result could differ from the mod's at an odd zoom or
+    // resolution rather than only costing less.
+    [DefaultValue(false)]
+    [ReloadRequired]
+    public bool LumenylCrystalScan { get; set; }
+
+    // Off until a before/after exists: it detours a tModLoader property every mod's content reads,
+    // which is the bar this project sets for a patch to shared infrastructure.
+    [DefaultValue(false)]
+    [ReloadRequired]
+    public bool ModTypeNameCache { get; set; }
+
+    // Off until a before/after exists: this is the only patch here that rewrites tModLoader rather
+    // than a mod, so it stays off until the reclaimed time has been measured on both sides.
+    [DefaultValue(false)]
+    [ReloadRequired]
+    public bool SceneEffectWeightCapacity { get; set; }
 
     // Off until a before/after exists: the saving is on the lighting worker threads, and how much
     // of that reaches the main thread's wait on them is not something the traces can say.
@@ -91,15 +166,14 @@ public class ClientConfig : ModConfig
     [ReloadRequired]
     public bool ForgeRecipeConditionDispatch { get; set; }
 
-    // Off until a before/after exists. This is the only patch here that edits the graphics
-    // pipeline itself rather than one mod, so it is the only one whose blast radius is every mod
-    // that draws. The survey behind it holds for the current mod list and no other.
-    [DefaultValue(false)]
-    [ReloadRequired]
-    public bool EmptyBatchFlush { get; set; }
-
     // Off until a before/after exists: this one replaces a SOTS feature rather than removing work.
     [DefaultValue(false)]
     [ReloadRequired]
     public bool FullBrightDispatch { get; set; }
+
+    // Off until a before/after exists: it rewrites a vanilla type every mod's particles pass
+    // through, and it changes the order particles are reused and drawn in within a pool.
+    [DefaultValue(false)]
+    [ReloadRequired]
+    public bool ParticlePoolScanCursor { get; set; }
 }

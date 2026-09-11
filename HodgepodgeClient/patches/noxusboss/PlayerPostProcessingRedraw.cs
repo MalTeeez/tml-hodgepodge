@@ -66,7 +66,9 @@ public class PlayerPostProcessingRedraw : Patch
         }
 
         // Give the redraw its new home before taking away the old one. The reverse order leaves
-        // the shaders sampling a target nothing ever drew into.
+        // the shaders sampling a target nothing ever drew into. The flag is static, so it has to
+        // be cleared first or it answers for the previous load and the removal happens anyway.
+        _redrawRelocated = false;
         MonoModHooks.Modify(applyEffects, RelocateRedraw);
         if (_redrawRelocated)
             MonoModHooks.Modify(updateTargets, RemoveUnconditionalRedraw);

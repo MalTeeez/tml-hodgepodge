@@ -5,20 +5,20 @@ using Mono.Cecil;
 using MonoMod.Cil;
 using Terraria.ModLoader;
 
-namespace HodgepodgeClient;
+namespace HodgepodgeServer;
 
 // Three mods read DateTime.Now from a per tick hook to answer a calendar question -- is it
-// Christmas, is it April Fools -- and DateTime.Now is a timezone conversion rather than a clock
-// read. Together they are 1.19% of the client thread.
+// Christmas, is it Halloween -- and DateTime.Now is a timezone conversion rather than a clock read.
+// On the profiled server Thorium's read alone was 0.157 ms of a 9.02 ms tick.
 //
 // The three have to be redirected together. The first DateTime.Now of a tick pays a cold cost and
-// later ones do not: Thorium's runs first in the tick at 0.117 ms, and CalValEX's, an identical
-// single call, runs later at 0.045 ms. Patching one site alone largely hands its cost to whichever
-// caller now goes first.
+// later ones do not, so patching one site alone largely hands its cost to whichever caller now
+// goes first. Ragnarok's site did not register on the server, and is included for that reason
+// rather than for its own cost.
 //
 // A calendar day cannot change inside a tick, so answering all of them from a value refreshed once
-// a second is exactly equivalent. This is the same defect AprilFoolsDateCheck removes from a
-// different CalValEX method; that patch avoids the read entirely, this one makes it cheap.
+// a second is exactly equivalent. The client mod carries the same patch for the same three mods;
+// Patch only applies this one on a dedicated server, so the two never rewrite the same process.
 public class WallClockDateCache : Patch
 {
     private const int RefreshMilliseconds = 1000;
@@ -39,7 +39,7 @@ public class WallClockDateCache : Patch
     private static DateTime _date = DateTime.Now;
     private static long _refreshedAt = Environment.TickCount64;
 
-    protected override bool Enabled => ModContent.GetInstance<ClientConfig>().WallClockDateCache;
+    protected override bool Enabled => ModContent.GetInstance<ServerConfig>().WallClockDateCache;
 
     // Environment.TickCount64 reads a counter the OS keeps updated, with none of the timezone work
     // that makes DateTime.Now worth caching in the first place. Called only from the main thread,

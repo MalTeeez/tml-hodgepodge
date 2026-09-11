@@ -14,4 +14,28 @@ public class ServerConfig : ModConfig
     [DefaultValue(true)]
     [ReloadRequired]
     public bool ForegroundRain { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool AprilFoolsTextureCheck { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool BlueMoonBuffLookup { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool WallClockDateCache { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool XykWingCountScan { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool RepeatedTextFormat { get; set; }
+
+    [DefaultValue(true)]
+    [ReloadRequired]
+    public bool DebuffProjectileScan { get; set; }
 }

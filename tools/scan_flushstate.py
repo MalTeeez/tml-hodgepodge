@@ -15,6 +15,11 @@ setting the state they need themselves.
 A static scan cannot decide emptiness -- whether a batch draws zero sprites is a runtime
 property of the branches inside it. This narrows a 74 mod pack to a reviewable list; it does
 not prove the patch safe.
+
+It did not. The patch this was written for came back clean here, shipped off by default, and
+drew walls at the wrong screen offset the first time it was switched on with FancyLighting
+installed. It is gone; this stays as the worked example for the next patch to shared
+infrastructure, and as the measure of what a clean result is worth.
 """
 import pathlib
 import re

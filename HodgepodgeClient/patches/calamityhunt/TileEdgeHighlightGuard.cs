@@ -38,8 +38,9 @@ public class TileEdgeHighlightGuard : Patch
         MonoModHooks.Modify(combineTileTargets, InjectFadeGuard);
     }
 
-    // Return immediately after the mod's own orig.Invoke(), which is the only work below the
-    // injection point that anything outside the overlay depends on.
+    // Skip the overlay build, not the whole tail. CombineTileTargets ends by unbinding the render
+    // target and clearing the back buffer, which it does on every frame and which the rest of the
+    // frame draws through, so the guard jumps to that restore rather than returning past it.
     private void InjectFadeGuard(ILContext il)
     {
         ILCursor cursor = new ILCursor(il);
@@ -50,13 +51,28 @@ public class TileEdgeHighlightGuard : Patch
                 "CombineTileTargets, patch disabled");
             return;
         }
+        int afterOrig = cursor.Index;
 
-        ILLabel buildOverlay = cursor.DefineLabel();
+        // The restore is the only SetRenderTarget(null) in the method, and the label has to sit on
+        // the load of Main.instance that puts its graphics device on the stack.
+        if (!cursor.TryGotoNext(MoveType.Before,
+                i => i.MatchLdsfld(out FieldReference field) && field.Name == "instance",
+                i => i.MatchCallvirt(out MethodReference called)
+                    && called.Name == "get_GraphicsDevice",
+                i => i.MatchLdnull(),
+                i => i.MatchCallvirt(out MethodReference called)
+                    && called.Name == "SetRenderTarget"))
+        {
+            Mod.Logger.Error("Tile edge highlight guard: the render target restore was not found " +
+                "at the end of CombineTileTargets, patch disabled");
+            return;
+        }
+
+        ILLabel restoreTarget = cursor.MarkLabel();
+        cursor.Index = afterOrig;
         cursor.Emit(OpCodes.Ldarg_0);
         cursor.EmitDelegate<Func<object, bool>>(OverlayIsInvisible);
-        cursor.Emit(OpCodes.Brfalse, buildOverlay);
-        cursor.Emit(OpCodes.Ret);
-        cursor.MarkLabel(buildOverlay);
+        cursor.Emit(OpCodes.Brtrue, restoreTarget);
     }
 
     // The same threshold TileEdgeHighlight.DrawHighlight tests before drawing the target.

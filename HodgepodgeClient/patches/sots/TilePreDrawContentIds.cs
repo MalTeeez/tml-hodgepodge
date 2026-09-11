@@ -1,9 +1,6 @@
-using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Xna.Framework.Graphics;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using Terraria.ModLoader;
 
@@ -19,17 +16,11 @@ namespace HodgepodgeClient;
 // content is registered and never change afterwards. Measured at 0.032 ms/frame just resolving
 // them, inside a method costing 0.068 ms/frame of its own work.
 //
-// Every one of those calls is replaced with the id it returns, resolved once here. That is what
-// the mod would have compiled to if the ids were constants, and it is safe for the same reason:
-// this runs in PostSetupContent, by which point every id is assigned, and it runs again on a
-// reload, when they may be different.
+// Every one of those calls is replaced with the id it returns, resolved once here.
 public class TilePreDrawContentIds : Patch
 {
     private const string TargetMod = "SOTS";
     private const string TargetType = "SOTS.SOTSTile";
-
-    // Both are `static int Name<T>()` on ModContent and both answer with a registered content id.
-    private static readonly string[] Lookups = ["TileType", "WallType"];
 
     protected override bool Enabled =>
         ModContent.GetInstance<ClientConfig>().TilePreDrawContentIds;
@@ -50,59 +41,13 @@ public class TilePreDrawContentIds : Patch
             return;
         }
 
-        MonoModHooks.Modify(preDraw, FoldContentIds);
-    }
-
-    private void FoldContentIds(ILContext il)
-    {
-        int folded = 0;
-        foreach (Instruction instruction in il.Body.Instructions)
+        MonoModHooks.Modify(preDraw, il =>
         {
-            if (instruction.OpCode != OpCodes.Call
-                || instruction.Operand is not GenericInstanceMethod lookup
-                || !Lookups.Contains(lookup.ElementMethod.Name)
-                || lookup.ElementMethod.DeclaringType.Name != nameof(ModContent))
-                continue;
+            List<string> skipped = [];
+            int folded = ContentIdFolding.FoldContentLookups(il,
+                ContentIdFolding.InAssembly(sots.Code), skipped.Add);
 
-            int? id = Resolve(lookup);
-            if (id == null)
-                continue;
-
-            instruction.OpCode = OpCodes.Ldc_I4;
-            instruction.Operand = id.Value;
-            folded++;
-        }
-
-        // Nothing folded means the comparisons are no longer written as ModContent lookups, so the
-        // method is doing something this patch has not read. It is left exactly as it was.
-        if (folded == 0)
-            Mod.Logger.Error("Tile pre draw content ids: PreDraw no longer resolves any content " +
-                "ids, left as it is");
-        else
-            Mod.Logger.Info($"Tile pre draw content ids: folded {folded} lookups into constants");
-    }
-
-    // Calls the lookup once, now, for the value it will return every time from here on. Cecil
-    // spells a nested type with a slash where reflection wants a plus.
-    private int? Resolve(GenericInstanceMethod lookup)
-    {
-        try
-        {
-            Type content = Type.GetType(lookup.GenericArguments[0].FullName.Replace('/', '+')
-                + ", " + lookup.GenericArguments[0].Resolve().Module.Assembly.Name.Name);
-            MethodInfo generic = typeof(ModContent)
-                .GetMethod(lookup.ElementMethod.Name, BindingFlags.Static | BindingFlags.Public);
-
-            if (content == null || generic == null)
-                return null;
-
-            return (int)generic.MakeGenericMethod(content).Invoke(null, null);
-        }
-        catch (Exception exception)
-        {
-            Mod.Logger.Error($"Tile pre draw content ids: {lookup.GenericArguments[0].Name} did " +
-                $"not resolve, left as a call, {exception.Message}");
-            return null;
-        }
+            ContentIdFolding.Report(Mod, "Tile pre draw content ids", "PreDraw", folded, skipped);
+        });
     }
 }

@@ -11,5 +11,35 @@ Configs: {
 			Label: Calamity foreground rain
 			Tooltip: Stops the server simulating foreground rain particles it never draws.
 		}
+
+		AprilFoolsTextureCheck: {
+			Label: CalValEX April Fools textures
+			Tooltip: Stops the April Fools texture test running for every NPC every tick, where it can never be true.
+		}
+
+		BlueMoonBuffLookup: {
+			Label: InfernalEclipseAPI BlueMoon buffs
+			Tooltip: Resolves the BlueMoon buff fields once at load instead of by name for every player every tick.
+		}
+
+		WallClockDateCache: {
+			Label: Wall clock date reads
+			Tooltip: Answers per tick DateTime.Now reads from a value refreshed once a second.
+		}
+
+		XykWingCountScan: {
+			Label: Calamity Xyk wing count
+			Tooltip: Counts a player's wings once per wing update instead of four times.
+		}
+
+		RepeatedTextFormat: {
+			Label: Repeated text formatting
+			Tooltip: Answers a repeated text format from the previous result when neither the text nor its arguments changed.
+		}
+
+		DebuffProjectileScan: {
+			Label: SOTS debuff projectile scan
+			Tooltip: Skips dead projectile slots in the per NPC per tick scan, which none of its tests could match anyway.
+		}
 	}
 }

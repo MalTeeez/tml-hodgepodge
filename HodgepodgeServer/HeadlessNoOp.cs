@@ -2,15 +2,14 @@ using System;
 using System.Reflection;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using Terraria;
 using Terraria.ModLoader;
 
 namespace HodgepodgeServer;
 
-// Base for a patch on a method whose whole body is unobservable without a screen. The patch is
-// only applied when Main.dedServ, so the injected return needs no runtime test and a client
+// Base for a patch on a method whose whole body is unobservable without a screen. Patch only
+// applies it on a dedicated server, so the injected return needs no runtime test and a client
 // running this mod is left untouched.
-public abstract class HeadlessNoOp : ModSystem
+public abstract class HeadlessNoOp : Patch
 {
     protected abstract string TargetMod { get; }
 
@@ -18,24 +17,7 @@ public abstract class HeadlessNoOp : ModSystem
 
     protected abstract string TargetMethod { get; }
 
-    protected abstract bool Enabled { get; }
-
-    public override void PostSetupContent()
-    {
-        if (!Main.dedServ || !Enabled)
-            return;
-
-        try
-        {
-            Apply();
-        }
-        catch (Exception exception)
-        {
-            Mod.Logger.Error($"{GetType().Name}: disabled, {exception}");
-        }
-    }
-
-    private void Apply()
+    protected override void Apply()
     {
         if (!ModLoader.TryGetMod(TargetMod, out Mod target))
             return;

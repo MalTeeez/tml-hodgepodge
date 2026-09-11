@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using Terraria.ModLoader;
@@ -15,19 +16,33 @@ namespace HodgepodgeClient;
 //             if (screen.ShouldBeActive() && !BossRushActive) { ... }
 //     }
 //
-// Neither the update nor the loop consults BossIntroductionAnimationsAreAllowed, so with the
-// feature switched off in Infernum's own config the whole thing still runs once a frame -- 0.077
-// ms/frame, 0.55% of the client thread, to decide it has nothing to show.
+// The loop does not consult BossIntroductionAnimationsAreAllowed, so with the feature switched off
+// in Infernum's own config it still runs once a frame to decide it has nothing to show.
 //
-// The config only ever suppresses the screens, so with it off this method cannot produce anything.
-// Skipping it also skips UpdateScreens, and the animation timers it advances are read nowhere but
-// the draw that is being skipped.
+// The config only ever suppresses the screens, so with it off the loop cannot produce anything and
+// is skipped. UpdateScreens is deliberately left to run first. Its per screen Update is what
+// resets the animation state while the config is off:
+//
+//     if (!ShouldBeActive() || !InfernumConfig.Instance.BossIntroductionAnimationsAreAllowed)
+//     {
+//         AnimationTimer = 0; HasPlayedMainSound = false; CachedText = string.Empty; return;
+//     }
+//
+// Skipping that would freeze a part played animation, so switching the setting back on during an
+// encounter would resume mid animation with its sound already marked as played.
+//
+// UpdateScreens is the larger half of the cost, 558 ms of the 882 ms this method spent across a
+// 240 second capture, and nearly all of that is the ShouldBeActive call the reset short circuits
+// on. It cannot be skipped: ModCallIntroScreen.ShouldBeActive returns a delegate handed in by
+// another mod through Mod.Call, so no audit here can establish that it is free of side effects.
+// What is left to reclaim is the draw loop, 324 ms of the 882 ms.
 public class BossIntroScreenGate : Patch
 {
     private const string TargetMod = "InfernumMode";
     private const string ManagerType = "InfernumMode.Content.BossIntroScreens.IntroScreenManager";
     private const string ConfigType = "InfernumMode.Core.InfernumConfig";
     private const string AllowedProperty = "BossIntroductionAnimationsAreAllowed";
+    private const string UpdateMethod = "UpdateScreens";
 
     private static Func<bool> _animationsAllowed;
 
@@ -63,6 +78,16 @@ public class BossIntroScreenGate : Patch
     private void SkipWhenScreensAreOff(ILContext il)
     {
         ILCursor cursor = new ILCursor(il);
+
+        // After the UpdateScreens call, never before it, so the animation reset still happens.
+        if (!cursor.TryGotoNext(MoveType.After,
+                i => i.MatchCall(out MethodReference called) && called.Name == UpdateMethod))
+        {
+            Mod.Logger.Error($"Boss intro screen gate: Draw no longer opens with {UpdateMethod}, " +
+                "so the gate cannot be placed after the animation reset, patch disabled");
+            return;
+        }
+
         ILLabel screensAllowed = cursor.DefineLabel();
         cursor.EmitDelegate<Func<bool>>(AnimationsAllowed);
         cursor.Emit(OpCodes.Brtrue, screensAllowed);
