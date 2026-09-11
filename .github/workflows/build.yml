@@ -36,7 +36,8 @@ jobs:
 
       - env:
           TmlInstallDir: ${{ github.workspace }}/tml
-        run: ./build.sh
+        # Invoked through bash because the checkout has no executable bit, git stores it as 100644.
+        run: bash build.sh
 
       - uses: actions/upload-artifact@v7
         with:
